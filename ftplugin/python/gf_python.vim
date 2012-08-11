@@ -60,5 +60,5 @@ def python_goto_file():
     print >> sys.stderr, 'E447: Can\'t find file "%s" in python\'s sys.path' % cw
 EOF
 
-map gf :python python_goto_file()<cr>
+nnoremap <buffer> gf :python python_goto_file()<cr>
 
