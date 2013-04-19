@@ -38,26 +38,51 @@ if !has('python')
 endif
 
 python << EOF
-import vim
-import sys
-import re
-import glob
+import imp
 import os
+import re
+import vim
+
+def find_module(module, path=None):
+    parts = module.split('.')
+    if len(parts) == 1:
+        if path:
+            fh, filename, (suffix, mode, type_) = imp.find_module(module, [path])
+        else:
+            fh, filename, (suffix, mode, type_) = imp.find_module(module)
+        try:
+            if type_ == imp.PKG_DIRECTORY:
+                return os.path.join(filename, '__init__.py')
+            elif type_ == imp.PY_COMPILED:
+                return filename.rstirp('c')
+            elif type_ == imp.PY_SOURCE:
+                return filename
+            else:
+                raise Exception()
+        finally:
+            if fh:
+                fh.close()
+    else:
+        if path:
+            fh, filename, (suffix, mode, type_) = imp.find_module(parts[0], [path])
+        else:
+            fh, filename, (suffix, mode, type_) = imp.find_module(parts[0])
+        try:
+            return find_module('.'.join(parts[1:]), filename)
+        finally:
+            if fh:
+                fh.close()
+
 def python_goto_file():
     cw = vim.eval('expand("<cfile>")')
     module = re.sub('\.', '/', cw)
-    for p in sys.path:
-        d = os.path.join(p, module)
-        if os.path.isdir(d):
-            f = os.path.join(d, '__init__.py')
-            if os.path.isfile(f):
-                vim.command('split %s' % f)
-                return
-        g = os.path.join(p, '%s.py*' % module )
-        for f in glob.iglob(g):
-            vim.command('split %s' % f)
-            return
-    print >> sys.stderr, 'E447: Can\'t find file "%s" in python\'s sys.path' % cw
+    try:
+        filename = find_module(module)
+    except:
+        print >> sys.stderr, 'E447: Can\'t find module "%s"' % module
+    else:
+        vim.command('edit %s' % filename)
+    return
 EOF
 
 nnoremap <buffer> gf :python python_goto_file()<cr>
