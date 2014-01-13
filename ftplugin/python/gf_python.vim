@@ -43,7 +43,7 @@ import os
 import re
 import vim
 
-def find_module(module, path=None):
+def gf_python_find_module(module, path=None):
     parts = module.split('.')
     if len(parts) == 1:
         if path:
@@ -68,7 +68,7 @@ def find_module(module, path=None):
         else:
             fh, filename, (suffix, mode, type_) = imp.find_module(parts[0])
         try:
-            return find_module('.'.join(parts[1:]), filename)
+            return gf_python_find_module('.'.join(parts[1:]), filename)
         finally:
             if fh:
                 fh.close()
@@ -77,7 +77,7 @@ def python_goto_file():
     cw = vim.eval('expand("<cfile>")')
     module = re.sub('\.', '/', cw)
     try:
-        filename = find_module(module)
+        filename = gf_python_find_module(module)
     except:
         print >> sys.stderr, 'E447: Can\'t find module "%s"' % module
     else:
