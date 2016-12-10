@@ -28,9 +28,9 @@
 
 if exists("g:loaded_gf_python")
     finish
-else
-    let g:loaded_gf_python = 1
 endif
+
+let g:loaded_gf_python = 1
 
 if !has('python')
     echoerr "Error: the gf_python.vim plugin requires Vim to be compiled with +python"
@@ -38,23 +38,33 @@ if !has('python')
 endif
 
 python << EOF
+
+from __future__ import print_function, unicode_literals
+
 import imp
 import os
 import re
 import vim
 
+
 def gf_python_find_module(module, path=None):
-    parts = module.split('.')
+    spec = module.lstrip('.')
+    relative = len(module) - len(spec)
+    parts = spec.split('.')
+
+    if relative:
+        path = os.path.join(path, *(['.'] + ['..']*(relative-1)))
+    
     if len(parts) == 1:
         if path:
-            fh, filename, (suffix, mode, type_) = imp.find_module(module, [path])
+            fh, filename, (suffix, mode, type_) = imp.find_module(spec, [path])
         else:
-            fh, filename, (suffix, mode, type_) = imp.find_module(module)
+            fh, filename, (suffix, mode, type_) = imp.find_module(spec)
         try:
             if type_ == imp.PKG_DIRECTORY:
                 return os.path.join(filename, '__init__.py')
             elif type_ == imp.PY_COMPILED:
-                return filename.rstirp('c')
+                return filename.rstrip('c')
             elif type_ == imp.PY_SOURCE:
                 return filename
             else:
@@ -73,13 +83,22 @@ def gf_python_find_module(module, path=None):
             if fh:
                 fh.close()
 
+
 def python_goto_file():
-    cw = vim.eval('expand("<cfile>")')
-    module = re.sub('\.', '/', cw)
+    module = vim.eval('expand("<cfile>")')
+    buf_pwd = os.path.split(vim.eval('expand("%")'))[0]
+    if buf_pwd.startswith('/'):
+        path = buf_pwd
+    else:
+        vim_pwd = vim.eval('expand("$PWD")')
+        path = os.path.join(vim_pwd, buf_pwd)
     try:
-        filename = gf_python_find_module(module)
+        if module.startswith('.'):
+            filename = gf_python_find_module(module, path)
+        else:
+            filename = gf_python_find_module(module)
     except:
-        print >> sys.stderr, 'E447: Can\'t find module "%s"' % module
+        print('E447: Can\'t find module "%s"' % module, file=sys.stderr)
     else:
         vim.command('edit %s' % filename)
     return
