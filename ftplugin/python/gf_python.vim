@@ -32,16 +32,22 @@ else
     let g:loaded_gf_python = 1
 endif
 
-if !has('python')
-    echoerr "Error: the gf_python.vim plugin requires Vim to be compiled with +python"
+
+if has('python3')
+    command! -nargs=1 Python python3 <args>
+elseif has('python')
+    command! -nargs=1 Python python <args>
+else
+    echoerr "Error: the gf_python.vim plugin requires Vim to be compiled with +python or +python3"
     finish
 endif
 
-python << EOF
+Python << EOF
 import imp
 import os
 import re
 import vim
+import sys
 
 def gf_python_find_module(module, path=None):
     parts = module.split('.')
@@ -73,7 +79,9 @@ def gf_python_find_module(module, path=None):
             if fh:
                 fh.close()
 
-def python_goto_file():
+def python_goto_file(mode='edit'):
+    if '.' not in sys.path:
+        sys.path.append('.')
     cw = vim.eval('expand("<cfile>")')
     module = re.sub('\.', '/', cw)
     try:
@@ -81,9 +89,16 @@ def python_goto_file():
     except:
         print >> sys.stderr, 'E447: Can\'t find module "%s"' % module
     else:
-        vim.command('edit %s' % filename)
-    return
+        vim.command('%s %s'%(mode, filename))
+
+def python_goto_file_tab():
+    python_goto_file('tab split')
+
+def python_goto_file_window():
+    python_goto_file('vs')
 EOF
 
-nnoremap <buffer> gf :python python_goto_file()<cr>
+nnoremap gf :Python python_goto_file()<cr>
+nnoremap <C-W>f :Python python_goto_file_window()<cr>
+nnoremap <C-W>gf :Python python_goto_file_tab()<cr>
 
