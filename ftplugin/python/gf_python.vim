@@ -93,7 +93,7 @@ def python_goto_file_window():
     python_goto_file('vs')
 EOF
 
-nnoremap <buffer> gf :python3 python_goto_file()<cr>
+nnoremap gf :python3 python_goto_file()<cr>
 nnoremap <C-W>f :python3 python_goto_file_window()<cr>
 nnoremap <C-W>gf :python3 python_goto_file_tab()<cr>
 
