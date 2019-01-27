@@ -32,7 +32,7 @@ else
     let g:loaded_gf_python = 1
 endif
 
-if !has('python')
+if !has('python3')
     echoerr "Error: the gf_python.vim plugin requires Vim to be compiled with +python"
     finish
 endif
@@ -42,6 +42,7 @@ import imp
 import os
 import re
 import vim
+import sys
 
 def gf_python_find_module(module, path=None):
     parts = module.split('.')
@@ -74,6 +75,8 @@ def gf_python_find_module(module, path=None):
                 fh.close()
 
 def python_goto_file():
+    if '.' not in sys.path:
+        sys.path.append('.')
     cw = vim.eval('expand("<cfile>")')
     module = re.sub('\.', '/', cw)
     try:
@@ -85,5 +88,5 @@ def python_goto_file():
     return
 EOF
 
-nnoremap <buffer> gf :python python_goto_file()<cr>
+nnoremap <buffer> gf :python3 python_goto_file()<cr>
 
