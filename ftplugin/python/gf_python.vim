@@ -32,12 +32,17 @@ else
     let g:loaded_gf_python = 1
 endif
 
-if !has('python3')
-    echoerr "Error: the gf_python.vim plugin requires Vim to be compiled with +python3"
+
+if has('python3')
+    command! -nargs=1 Python python3 <args>
+elseif has('python')
+    command! -nargs=1 Python python <args>
+else
+    echoerr "Error: the gf_python.vim plugin requires Vim to be compiled with +python or +python3"
     finish
 endif
 
-python3 << EOF
+Python << EOF
 import imp
 import os
 import re
@@ -93,7 +98,7 @@ def python_goto_file_window():
     python_goto_file('vs')
 EOF
 
-nnoremap gf :python3 python_goto_file()<cr>
-nnoremap <C-W>f :python3 python_goto_file_window()<cr>
-nnoremap <C-W>gf :python3 python_goto_file_tab()<cr>
+nnoremap gf :Python python_goto_file()<cr>
+nnoremap <C-W>f :Python python_goto_file_window()<cr>
+nnoremap <C-W>gf :Python python_goto_file_tab()<cr>
 
