@@ -37,7 +37,7 @@ if !has('python3')
     finish
 endif
 
-python << EOF
+python3 << EOF
 import imp
 import os
 import re
